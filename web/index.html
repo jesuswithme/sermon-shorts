@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>설교 쇼츠 메이커</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/web/style.css">
+</head>
+<body>
+<header class="top">
+  <nav class="steps">
+    <button class="step" data-step="1"><span class="num">1</span>영상 넣기</button>
+    <button class="step" data-step="2"><span class="num">2</span>쇼츠 내용 고르기</button>
+    <button class="step" data-step="3"><span class="num">3</span>더 다듬기(선택)</button>
+  </nav>
+  <div class="top-right">
+    <button class="pill" id="btnSaved"><span class="dot"></span>저장된 쇼츠 <b id="savedCount">0</b></button>
+    <button class="pill" id="btnNew">＋ 새 쇼츠 만들기</button>
+  </div>
+</header>
+
+<!-- STEP 1 -->
+<section id="step1" class="page">
+  <div class="s1-wrap">
+    <h1>설교 영상 하나로 쇼츠를 마음껏</h1>
+    <p class="sub">유튜브 링크를 넣거나 영상 파일을 끌어다 놓으세요. 받아쓰기, 추천 구간, 무음 삭제까지 자동으로 해 드려요.</p>
+    <div class="card">
+      <div class="row">
+        <input id="url" class="big-input" placeholder="유튜브 링크 붙여넣기 (예: https://youtu.be/...)">
+        <button class="btn primary" id="btnIngest">가져오기</button>
+      </div>
+      <div id="drop" class="drop">
+        <div>🎬 여기에 영상 파일을 끌어다 놓거나 <label class="link">파일 고르기<input type="file" id="file" accept="video/*,audio/*" hidden></label></div>
+        <small>mp4, mov, mkv, m4a 등</small>
+      </div>
+      <details class="opts">
+        <summary>가져오기 설정</summary>
+        <div class="grid2">
+          <label>설교 시작 (선택)<input id="optStart" placeholder="예: 25:30"></label>
+          <label>설교 끝 (선택)<input id="optEnd" placeholder="예: 1:05:00"></label>
+          <label>받아쓰기 정확도
+            <select id="optModel">
+              <option value="small">빠르게 (small)</option>
+              <option value="large-v3-turbo" selected>추천 (large-v3-turbo)</option>
+              <option value="medium">보통 (medium)</option>
+              <option value="large-v3">가장 정확하게 (large-v3, 느림)</option>
+            </select>
+          </label>
+          <label class="chk"><input type="checkbox" id="optYt"> 유튜브 자동자막이 있으면 그걸로 빠르게</label>
+          <label class="chk"><input type="checkbox" id="optAI" checked> AI 추천 구간 사용 (Claude, 없으면 자동 규칙)</label>
+        </div>
+        <p class="hint">예배 전체 영상이면 설교 시작/끝을 넣으면 훨씬 빨라요. 모든 처리는 내 컴퓨터에서 하므로 추가 비용이 없습니다.</p>
+      </details>
+      <div id="ingestProg" class="prog hidden"><div class="bar"><i></i></div><span class="msg"></span></div>
+    </div>
+    <h3>최근 설교</h3>
+    <div id="recent" class="recent"></div>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section id="step2" class="page hidden">
+  <div class="s2">
+    <aside class="s2-left">
+      <video id="player" controls preload="metadata"></video>
+      <div class="s2-head">
+        <h3>만들 쇼츠 <small id="shortCount"></small></h3>
+        <div>
+          <button class="btn sm ghost" id="btnReRec" title="AI 추천 다시 받기">✨ 추천 다시</button>
+          <button class="btn sm ghost" id="btnAddShort">＋ 빈 쇼츠</button>
+        </div>
+      </div>
+      <div id="shortList" class="short-list"></div>
+      <button class="btn primary wide" id="btnToStep3">다음: 더 다듬기 →</button>
+    </aside>
+    <main class="s2-right">
+      <div class="tr-head">
+        <div>
+          <h3 id="srcTitle">설교</h3>
+          <p class="hint">원하는 대사를 <b>마우스로 끌어서(드래그)</b> 고르세요. 여러 구간을 더하면 하이라이트 모음이 됩니다. 문장을 <b>두 번 클릭</b>하면 자막 글자를 고칠 수 있어요.</p>
+        </div>
+        <input id="search" class="search" placeholder="🔍 말씀 검색">
+      </div>
+      <div id="transcript" class="transcript"></div>
+      <div id="selBar" class="selbar hidden">
+        <span id="selInfo"></span>
+        <button class="btn sm ghost" id="selPlay">▶ 들어보기</button>
+        <button class="btn sm primary" id="selAdd">현재 쇼츠에 추가</button>
+        <button class="btn sm dark" id="selNew">새 쇼츠로 만들기</button>
+        <button class="btn sm ghost" id="selCancel">취소</button>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- STEP 3 -->
+<section id="step3" class="page hidden">
+  <div class="s3">
+    <div class="s3-left">
+      <div class="short-pick">
+        <select id="pickShort"></select>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <h3>✨ 쇼츠 템플릿</h3>
+          <div class="seg-toggle"><button class="on" data-tab="rec">추천</button><button data-tab="mine">내 서식</button></div>
+        </div>
+        <div id="tplGrid" class="tpl-grid"></div>
+        <p class="hint" id="tplNote"></p>
+      </div>
+      <div class="card adv">
+        <div class="adv-h">
+          <h3>고급 디자인 설정 <span class="badge hidden" id="chgBadge"></span></h3>
+          <div class="chips" id="quickLines">
+            <button data-v="0">자막 없음</button><button data-v="1">한 줄</button><button data-v="2">두 줄</button>
+          </div>
+        </div>
+        <div class="banner hidden" id="chgBanner"><span id="chgText"></span><button class="btn sm ghost" id="btnReset">서식대로</button></div>
+
+        <details class="sect" open>
+          <summary>제목 <span class="sum" id="sumTitle"></span></summary>
+          <div class="grid2">
+            <label>윗줄<input id="t1"></label>
+            <label>아랫줄 (강조색)<input id="t2"></label>
+          </div>
+        </details>
+        <details class="sect">
+          <summary>배경 스타일 <span class="sum" id="sumBg"></span></summary>
+          <div class="opt-row"><span>배경</span><div class="chips" data-k="bg">
+            <button data-v="black">검정</button><button data-v="white">흰색</button><button data-v="beige">베이지</button><button data-v="navy">남색</button><button data-v="blur">흐린 원본</button></div></div>
+          <div class="opt-row"><span>영상 모양</span><div class="chips" data-k="fit">
+            <button data-v="16x9">원본(가로)</button><button data-v="1x1">1:1</button><button data-v="4x5">4:5</button><button data-v="full">세로 꽉</button></div></div>
+          <div class="opt-row"><span>확대</span><input type="range" min="1" max="1.8" step="0.05" data-k="zoom"><span class="val" id="zoomVal"></span></div>
+          <div class="opt-row"><span>좌우 위치</span><input type="range" min="0" max="1" step="0.02" data-k="focusX"><span class="val" id="focusVal"></span></div>
+        </details>
+        <details class="sect">
+          <summary>타이틀 <span class="sum" id="sumTitleStyle"></span></summary>
+          <div class="opt-row"><span>표시</span><div class="chips" data-k="title.show"><button data-v="true">제목 표시</button><button data-v="false">제목 없음</button></div></div>
+          <div class="opt-row"><span>글꼴</span><div class="chips" data-k="title.font">
+            <button data-v="pretendard-black">굵은 고딕</button><button data-v="pretendard-extrabold">고딕</button><button data-v="blackhansans">검은고딕</button></div></div>
+          <div class="opt-row"><span>크기</span><input type="range" min="56" max="120" step="2" data-k="title.size"><span class="val" id="tSizeVal"></span></div>
+          <div class="opt-row"><span>강조색</span><div class="colors" data-k="title.accent"></div></div>
+        </details>
+        <details class="sect">
+          <summary>자막 <span class="sum" id="sumSub"></span></summary>
+          <div class="opt-row"><span>모양</span><div class="chips" data-k="sub.style">
+            <button data-v="basic">기본</button><button data-v="semi">반투명</button><button data-v="crisp">또렷</button><button data-v="bold">굵게</button><button data-v="round">둥글</button><button data-v="soft">부드</button></div></div>
+          <div class="opt-row"><span>움직임</span><div class="chips" data-k="sub.motion">
+            <button data-v="none">없음</button><button data-v="pop">톡 튀기</button><button data-v="fade">스르륵</button><button data-v="up">올라오기</button><button data-v="karaoke">단어 강조</button></div></div>
+          <div class="opt-row"><span>크기</span><input type="range" min="44" max="96" step="2" data-k="sub.size"><span class="val" id="sSizeVal"></span></div>
+          <div class="opt-row"><span>위치</span><input type="range" min="-300" max="300" step="10" data-k="sub.offset"><span class="val" id="sOffVal"></span></div>
+          <div class="opt-row"><span>강조색</span><div class="colors" data-k="sub.highlight"></div></div>
+        </details>
+        <details class="sect">
+          <summary>교회 표시 <span class="sum" id="sumChurch"></span></summary>
+          <div class="opt-row"><span>표시</span><div class="chips" data-k="church.show"><button data-v="true">표시</button><button data-v="false">없음</button></div></div>
+          <div class="opt-row"><span>교회 이름</span><input id="churchName" placeholder="예: 행복한교회"></div>
+          <div class="opt-row"><span>로고</span><label class="btn sm ghost">로고 올리기<input type="file" id="logoFile" accept="image/*" hidden></label><button class="btn sm ghost" id="logoClear">로고 빼기</button><img id="logoPrev" class="logo-prev"></div>
+          <div class="opt-row"><span>마무리 화면</span><div class="chips" data-k="outro.on"><button data-v="true">2초 넣기</button><button data-v="false">없음</button></div></div>
+          <div class="opt-row"><span>마무리 문구</span><input id="outroText" placeholder="구독과 좋아요 부탁드립니다"></div>
+        </details>
+        <details class="sect">
+          <summary>배경음악 · 편집 <span class="sum" id="sumBgm"></span></summary>
+          <div class="opt-row"><span>배경음악</span><select id="bgmSel"></select><button class="btn sm ghost" id="bgmPlay">▶</button><label class="btn sm ghost">내 음악<input type="file" id="bgmFile" accept="audio/*" hidden></label></div>
+          <div class="opt-row"><span>음악 크기</span><input type="range" min="0.03" max="0.4" step="0.01" data-k="bgm.volume"><span class="val" id="bgmVolVal"></span></div>
+          <div class="opt-row"><span>무음 삭제</span><div class="chips" data-k="silence.on"><button data-v="true">켜기</button><button data-v="false">끄기</button></div></div>
+          <div class="opt-row"><span>쉼 허용</span><input type="range" min="0.15" max="1.2" step="0.05" data-k="silence.gap"><span class="val" id="gapVal"></span></div>
+        </details>
+        <div class="tpl-save">
+          <span class="hint">지금 조정한 설정을 내 서식으로 저장해 두면 다음 설교에도 그대로 쓸 수 있어요.</span>
+          <button class="btn sm ghost" id="btnSaveTpl">내 서식으로 저장</button>
+        </div>
+      </div>
+    </div>
+    <div class="s3-right">
+      <h3>완성 화면</h3>
+      <p class="hint">자막이 나오는 대목을 골라 그렸습니다. 영상의 첫 장면이 아닙니다.</p>
+      <div class="phone"><canvas id="pv" width="1080" height="1920"></canvas><div id="pvTime" class="pv-time hidden"></div></div>
+      <button class="btn dark wide" id="btnQuick">▶ 빠른 전체 미리보기</button>
+      <button class="btn ghost wide" id="btnSubs">✎ 화면 자막 다듬기</button>
+      <button class="btn ghost wide" id="btnCover">🖼 커버 이미지 저장</button>
+      <div class="warn hidden" id="warnBox">
+        <div class="warn-h"><b>⚠ 확인이 필요한 항목 <span id="warnCount"></span>개</b><button class="btn sm ghost" id="warnToggle">보기</button></div>
+        <small>영상을 만들기 전에 한 번 확인해 주세요.</small>
+        <ul id="warnList" class="hidden"></ul>
+      </div>
+      <button class="btn primary wide big" id="btnRender">✂ 선택한 <span id="renderN">0</span>개 영상 만들기</button>
+      <p class="hint center">영상 1개당 약 1분 정도 걸립니다. 모두 내 컴퓨터에서 만들어져 비용이 들지 않아요.</p>
+      <div id="renderProg" class="prog hidden"><div class="bar"><i></i></div><span class="msg"></span></div>
+      <div id="renderDone"></div>
+    </div>
+  </div>
+</section>
+
+<!-- modals -->
+<div id="modal" class="modal hidden"><div class="modal-box"><div class="modal-h"><h3 id="modalTitle"></h3><button class="x" id="modalClose">✕</button></div><div id="modalBody" class="modal-body"></div></div></div>
+<video id="hv" preload="auto" muted playsinline class="offscreen"></video>
+<audio id="bgmAudio"></audio>
+<div id="toast" class="toast hidden"></div>
+<script src="/web/app.js"></script>
+</body>
+</html>

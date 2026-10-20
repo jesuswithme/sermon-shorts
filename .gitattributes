@@ -1,0 +1,4 @@
+*.cmd -text
+*.ps1 -text
+*.otf binary
+*.ttf binary

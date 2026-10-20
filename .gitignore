@@ -1,0 +1,8 @@
+.venv/
+data/
+output/
+tools/
+__pycache__/
+*.pyc
+bgm/*.m4a
+!bgm/.gitkeep
